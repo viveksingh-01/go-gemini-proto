@@ -11,12 +11,13 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/joho/godotenv"
+	"github.com/rs/cors"
 	genai "google.golang.org/genai"
 )
 
 // --- Types ---
 type ChatRequest struct {
-	UserID  string `json:"user_id"`
+	UserID  string `json:"userId"`
 	Message string `json:"message"`
 }
 
@@ -58,6 +59,8 @@ func chatHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Println(resp.Text())
+
 	// Respond with Gemini reply
 	response := ChatResponse{Response: resp.Text()}
 	w.Header().Set("Content-Type", "application/json")
@@ -81,8 +84,16 @@ func main() {
 	}
 
 	r := mux.NewRouter()
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   []string{"*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+	})
+	handler := c.Handler(r)
 	r.HandleFunc("/chat", chatHandler).Methods("POST")
 
-	fmt.Println("Server running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	fmt.Println("Server running on http://localhost:9090")
+	log.Fatal(http.ListenAndServe(":9090", handler))
 }
